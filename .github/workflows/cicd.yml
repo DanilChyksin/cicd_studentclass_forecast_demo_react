@@ -1,4 +1,4 @@
-name: My React CICD-file
+name: cicd file
 
 on:
   push:
@@ -8,83 +8,72 @@ jobs:
   test-backend:
     runs-on: ubuntu-latest
     steps:
-    - name: Скачиваем код
-      uses: actions/checkout@v4
-
-    - name: Установка NodeJS
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22.x'
-
-    - name: Установка пакетов и Тесты
-      working-directory: ./backend
-      run: |
-       npm ci
-       npm test
+      - name: install code
+        uses: actions/checkout@v4
+      - name: install node js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+      - name: install package and run tests
+        working-directory: ./backend
+        run: |
+          npm ci
+          npm test
 
   build_and_pack:
     needs: test-backend
     runs-on: ubuntu-latest
     steps:
-    - name: Скачиваем код
-      uses: actions/checkout@v4
+      - name: install code
+        uses: actions/checkout@v4
 
-    - name: Установка NodeJS
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22.x'
+      - name: install node js
+        uses: actions/setup-node@v4
 
-    - name: Сборка React
-      working-directory: ./frontend
-      run: |
-        npm ci
-        npm run build
+      - name: build react app
+        working-directory: ./frontend
+        run: |
+          npm ci 
+          npm run build
 
-    - name: Слияние (Монтируем frontend в директорию backend)
-      run: |
-        mkdir -p ./backend/public
-        rm -rf ./backend/public/*
-        cp -r ./frontend/dist/* ./backend/public/
-
-    - name: Упаковка Артефакта (плоская структура)
-      run: |
-        cd backend
-        zip -r ../weather-report-app.zip . -x "*/node_modules/*"
-
-
-    - name: Сохранение Артефакта
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-build
-        path: weather-report-app.zip
-        retention-days: 7
+      - name: merge (Монтирование frontend в директорию backend)
+        run: |
+          mkdir -p ./backend/public 
+          rm -rf ./backend/public/*
+          cp -r ./frontend/dist/* ./backend/public/
+      - name: build artifact
+        run: |
+          cd backend
+          zip -r ../weather-report-app.zip . -x "*/node_modules/*"
+      - name: save artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-build
+          path: weather-report-app.zip
+          retention-days: 7
 
   deploy:
     needs: build_and_pack
     runs-on: ubuntu-latest
     steps:
-    - name: Скачиваем код
-      uses: actions/checkout@v4
-
-    - name: Скачиваем Артефакт
-      uses: actions/download-artifact@v4
-      with: 
-        name: app-build
-        path: .
-
-    - name: Загружаем ключи SSH
-      uses: webfactory/ssh-agent@v0.9.0
-      with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-    - name: Установка Ансибл
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y ansible
-
-    - name: Запуск Ансибл
-      working-directory: ./ansible
-      run: |
-        echo "${{ secrets.VAULT_PASSWORD }}" > .vault_pass.txt
-        ansible-playbook -i inventory.ini deploy.yml --vault-password-file .vault_pass.txt -vvv
-        rm .vault_pass.txt
+      - name: install code
+        uses: actions/checkout@v4
+      - name: install artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-build
+          path: .
+      - name: install ssh key
+        uses: webfactory/shh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{secrets.SHH_PRIVATE_KEY}}
+      - name: install ansible
+        run: |
+          sudo apt-get update 
+          sudo apt-get install -y ansible
+      - name: run ansible
+        working-directory: ./ansible
+        run: |
+          echo "${{secrets.VAULT_PASSWORD}}" > .vault_pass.txt
+          ansible-playbook -i inventory.ini deploy.yml --vault-password-file .vault_pass.txt -vvv
+          rm .vault_pass.txt
