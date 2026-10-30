@@ -76,6 +76,22 @@ jobs:
       - name: run ansible
         working-directory: ./ansible
         env:
-          ANSIBLE_VAULT_PASSWORD: ${{ secrets.VAULT_PASSWORD }}
+          VAULT_PASS: ${{ secrets.VAULT_PASSWORD }}
         run: |
+          # 1. Безопасно записываем пароль в файл
+          cat << 'EOF' > .vault_pass.txt
+          ${{ secrets.VAULT_PASSWORD }}
+          EOF
+          
+          # 2. Убираем возможные пробелы/переносы строк из файла с паролем
+          tr -d '\r\n ' < .vault_pass.txt > .vault_pass_clean.txt
+          
+          # 3. Явно прописываем путь к файлу с паролем в конфигурацию Ansible
+          echo "vault_password_file = .vault_pass_clean.txt" >> ansible.cfg
+          
+          # 4. Запускаем playbook (аргументы просить больше не нужно, Ansible сам подтянет настройки из ansible.cfg)
           ansible-playbook -i inventory.ini deploy.yml -vvv
+          
+          # 5. Чистим за собой секретные файлы
+          rm -f .vault_pass.txt .vault_pass_clean.txt
+
