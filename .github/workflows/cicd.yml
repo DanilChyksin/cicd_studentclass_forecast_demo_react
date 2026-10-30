@@ -72,9 +72,10 @@ jobs:
         run: |
           sudo apt-get update 
           sudo apt-get install -y ansible
+          
       - name: run ansible
         working-directory: ./ansible
+        env:
+          ANSIBLE_VAULT_PASSWORD: ${{ secrets.VAULT_PASSWORD }}
         run: |
-          echo -n "$VAULT_PASS" > .vault_pass.txt
-          ansible-playbook -i inventory.ini deploy.yml --vault-password-file .vault_pass.txt -vvv
-          rm .vault_pass.txt
+          ansible-playbook -i inventory.ini deploy.yml -vvv
