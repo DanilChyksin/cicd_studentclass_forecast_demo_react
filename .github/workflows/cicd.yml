@@ -75,6 +75,6 @@ jobs:
       - name: run ansible
         working-directory: ./ansible
         run: |
-          echo -n "${{secrets.VAULT_PASSWORD}}" > .vault_pass.txt
+          echo -n "$VAULT_PASS" > .vault_pass.txt
           ansible-playbook -i inventory.ini deploy.yml --vault-password-file .vault_pass.txt -vvv
           rm .vault_pass.txt
