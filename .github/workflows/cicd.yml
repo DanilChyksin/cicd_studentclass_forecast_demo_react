@@ -67,7 +67,7 @@ jobs:
       - name: install ssh key
         uses: webfactory/ssh-agent@v0.9.0
         with:
-          ssh-private-key: ${{secrets.SHH_PRIVATE_KEY}}
+          ssh-private-key: ${{secrets.SSH_PRIVATE_KEY}}
       - name: install ansible
         run: |
           sudo apt-get update 
